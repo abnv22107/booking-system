@@ -1,9 +1,14 @@
 import streamlit as st
 from pypdf import PdfReader
+
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import FAISS
 from langchain_community.embeddings import HuggingFaceEmbeddings
 
+from llm.chatgroq_llm import generate_llm_response
+
+
+# ---------------- PDF INGESTION ----------------
 
 def extract_text_from_pdfs(pdf_files):
     text = ""
@@ -18,8 +23,8 @@ def extract_text_from_pdfs(pdf_files):
 
 def create_vector_store(text: str):
     splitter = RecursiveCharacterTextSplitter(
-        chunk_size=500,
-        chunk_overlap=100
+        chunk_size=800,
+        chunk_overlap=150
     )
     chunks = splitter.split_text(text)
 
@@ -27,8 +32,7 @@ def create_vector_store(text: str):
         model_name="sentence-transformers/all-MiniLM-L6-v2"
     )
 
-    vector_store = FAISS.from_texts(chunks, embeddings)
-    return vector_store
+    return FAISS.from_texts(chunks, embeddings)
 
 
 def ingest_pdfs(pdf_files):
@@ -38,16 +42,27 @@ def ingest_pdfs(pdf_files):
     return create_vector_store(text)
 
 
+# ---------------- PURE LLM-BASED RAG ----------------
+
 def rag_query(query: str):
     if "vector_store" not in st.session_state:
         return "No documents uploaded yet. Please upload PDFs first."
 
-    docs = st.session_state.vector_store.similarity_search(query, k=3)
+    vector_store = st.session_state.vector_store
+    docs = vector_store.similarity_search(query, k=4)
 
     if not docs:
-        return "I could not find relevant information in the uploaded documents."
+        return (
+            "I could not find relevant information in the uploaded documents."
+        )
 
-    context = "\n\n".join([doc.page_content for doc in docs])
+    context = "\n\n".join(doc.page_content for doc in docs)
 
-    # Simple RAG response (LLM will be added later)
-    return f"📄 **Based on the uploaded documents:**\n\n{context}"
+    # STRICT RAG PROMPT
+    llm_response = generate_llm_response(query, context)
+
+    if not llm_response:
+        return "LLM FAILED — check Groq API key, model access, or logs."
+
+
+    return llm_response

@@ -5,6 +5,7 @@ pypdf
 langchain==0.1.16
 langchain-community==0.0.34
 langsmith==0.1.30
+langchain-groq
 
 # Vector store & embeddings
 faiss-cpu
