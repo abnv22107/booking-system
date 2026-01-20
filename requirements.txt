@@ -1,0 +1,14 @@
+streamlit
+pypdf
+
+# LangChain ecosystem (pinned for stability)
+langchain==0.1.16
+langchain-community==0.0.34
+langsmith==0.1.30
+
+# Vector store & embeddings
+faiss-cpu
+sentence-transformers
+
+# Pydantic (force v1)
+pydantic<2
