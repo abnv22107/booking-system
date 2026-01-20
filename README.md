@@ -3,6 +3,9 @@
 A conversational, AI-driven booking assistant that supports document-based question answering (RAG) and a complete end-to-end doctor appointment booking workflow.  
 The system is built as a single Streamlit application and is fully deployed for public use.
 
+Live Demo:
+https://booking-system-n5zffw5a7rgzlz7ppqemlv.streamlit.app/
+
 ---
 
 ## 1. Project Overview
