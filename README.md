@@ -4,7 +4,7 @@ A conversational, AI-driven booking assistant that supports document-based quest
 The system is built as a single Streamlit application and is fully deployed for public use.
 
 Live Demo:
-https://booking-system-n5zffw5a7rgzlz7ppqemlv.streamlit.app/
+[https://booking-system-n5zffw5a7rgzlz7ppqemlv.streamlit.app/](https://llmragbookingsystem.streamlit.app/)
 
 ---
 
