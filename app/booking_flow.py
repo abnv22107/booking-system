@@ -3,6 +3,8 @@ import re
 from datetime import datetime
 
 from tools import save_booking, send_confirmation_email
+from tools import is_slot_available, suggest_nearby_slots
+
 
 REQUIRED_FIELDS = [
     "name",
@@ -21,6 +23,7 @@ FIELD_QUESTIONS = {
     "date": "What date would you prefer for the appointment? (YYYY-MM-DD)",
     "time": "What time would you prefer? (e.g., 10:30 AM)",
 }
+
 
 # ---------------- VALIDATION HELPERS ----------------
 
@@ -50,7 +53,6 @@ def initialize_booking_state():
     if "booking_state" not in st.session_state:
         st.session_state.booking_state = {
             "active": True,
-            "current_field": None,   # ✅ CRITICAL
             "name": None,
             "email": None,
             "phone": None,
@@ -58,6 +60,11 @@ def initialize_booking_state():
             "date": None,
             "time": None,
             "confirmed": False,
+
+            # slot validation
+            "slot_conflict": False,
+            "suggested_slots": [],
+            "current_field": None,
         }
 
 
@@ -68,6 +75,8 @@ def get_next_missing_field():
     return None
 
 
+# ---------------- UPDATE BOOKING STATE ----------------
+
 def update_booking_state(user_message: str):
     state = st.session_state.booking_state
     field = state.get("current_field")
@@ -77,7 +86,7 @@ def update_booking_state(user_message: str):
 
     value = user_message.strip()
 
-    # Field-specific validation
+    # ---------- VALIDATIONS ----------
     if field == "email" and not is_valid_email(value):
         return "❌ Please enter a valid email address."
 
@@ -87,9 +96,35 @@ def update_booking_state(user_message: str):
     if field == "date" and not is_valid_date(value):
         return "❌ Please enter date in YYYY-MM-DD format."
 
-    if field == "time" and not is_valid_time(value):
-        return "❌ Please enter a valid time (e.g., 10:30 AM)."
+    if field == "time":
+        if not is_valid_time(value):
+            return "❌ Please enter a valid time (e.g., 10:30 AM)."
 
+        date = state.get("date")
+        specialty = state.get("doctor_or_specialty")
+
+        # -------- SLOT CHECK --------
+        if not is_slot_available(date, value, specialty):
+            state["slot_conflict"] = True
+            state["suggested_slots"] = suggest_nearby_slots(
+                date, value, specialty
+            )
+
+            suggestion_text = ""
+            if state["suggested_slots"]:
+                suggestion_text = (
+                    "\n\n🕒 **Available nearby slots:** "
+                    + ", ".join(state["suggested_slots"])
+                )
+
+            return (
+                "⚠️ The selected time slot is already booked for this specialty.\n\n"
+                "Would you like to continue anyway?\n"
+                "Reply **Yes** to continue or **No** to choose another time."
+                + suggestion_text
+            )
+
+    # ---------- SAVE FIELD ----------
     state[field] = value
     state["current_field"] = None
     return None
@@ -113,9 +148,28 @@ def summarize_booking():
 
 def handle_booking_intent(user_message: str) -> str:
     initialize_booking_state()
-    state = st.session_state.booking_state  # ✅ FIX
+    state = st.session_state.booking_state
 
-    # ---------- CONFIRMATION STAGE ----------
+    # ---------- SLOT CONFLICT DECISION ----------
+    if state.get("slot_conflict"):
+        if user_message.lower() in ["yes", "y"]:
+            state["slot_conflict"] = False
+            state["suggested_slots"] = []
+            return summarize_booking()
+
+        elif user_message.lower() in ["no", "n"]:
+            state["slot_conflict"] = False
+            state["time"] = None
+            state["current_field"] = "time"
+            return FIELD_QUESTIONS["time"]
+
+        else:
+            return (
+                "Please reply **Yes** to continue with the same time "
+                "or **No** to choose a different slot."
+            )
+
+    # ---------- CONFIRMATION ----------
     if all(state.get(f) for f in REQUIRED_FIELDS):
         if not state["confirmed"]:
             if user_message.lower() in ["yes", "y", "confirm"]:
@@ -135,9 +189,9 @@ def handle_booking_intent(user_message: str) -> str:
                 )
 
                 email_sent = send_confirmation_email(
-                    to_email=booking_data["email"],
-                    subject="Doctor Appointment Confirmation",
-                    body=email_body
+                    booking_data["email"],
+                    "Doctor Appointment Confirmation",
+                    email_body
                 )
 
                 del st.session_state.booking_state
@@ -162,13 +216,13 @@ def handle_booking_intent(user_message: str) -> str:
             else:
                 return summarize_booking()
 
-    # ---------- STORE ANSWER IF EXPECTED ----------
+    # ---------- STORE ANSWER ----------
     if state.get("current_field"):
         error = update_booking_state(user_message)
         if error:
             return error
 
-    # ---------- ASK NEXT QUESTION ----------
+    # ---------- ASK NEXT ----------
     next_field = get_next_missing_field()
     if next_field:
         state["current_field"] = next_field
