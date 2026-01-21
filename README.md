@@ -22,6 +22,15 @@ The focus of the project is on **robust system design, conversational state hand
 
 ---
 
+## System Flow Diagram
+
+The diagram below illustrates the end-to-end flow of the AI Doctor Booking Assistant,
+covering user interaction, intent detection, document-based Q&A (RAG),
+appointment booking, persistence, and admin access.
+
+![System Flow Diagram](flow.png)
+
+
 ## Key Features
 
 ### Document-Based Question Answering (RAG)
