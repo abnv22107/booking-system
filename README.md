@@ -1,50 +1,49 @@
 # AI Doctor Booking Assistant
 
-A conversational, AI-driven booking assistant that supports document-based question answering (RAG) and a complete end-to-end doctor appointment booking workflow.  
-The system is built as a single Streamlit application and is fully deployed for public use.
+A conversational AI-powered booking assistant that supports document-based question answering (RAG) and an end-to-end doctor appointment booking workflow.  
+The application is built using Streamlit and deployed for public access.
 
-Live Demo:
-[https://booking-system-n5zffw5a7rgzlz7ppqemlv.streamlit.app/](https://llmragbookingsystem.streamlit.app/)
-
----
-
-## 1. Project Overview
-
-The goal of this project is to design and implement a **chat-based AI Booking Assistant** that can:
-
-- Answer user questions using uploaded documents (Retrieval-Augmented Generation).
-- Detect booking-related intent and guide the user through a structured booking flow.
-- Collect booking details across multiple turns without repetition.
-- Confirm details before storing them in a database.
-- Send a confirmation email after successful booking.
-- Provide an Admin Dashboard to view stored bookings.
-
-This project focuses on **system design, conversational state management, and robustness**, rather than just model usage.
+**Live Demo:**  
+https://llmragbookingsystem.streamlit.app/
 
 ---
 
-## 2. Key Features
+## Project Overview
 
-### Document-Based Q&A (RAG)
+This project implements a **chat-based AI Booking Assistant** that enables users to:
 
-- Users can upload one or more PDF documents.
-- Text is extracted, chunked, embedded, and stored in a vector index.
-- User questions are answered based on retrieved document context.
-- If no documents are uploaded, the assistant responds gracefully with a helpful message.
+- Ask questions based on uploaded PDF documents (RAG).
+- Book doctor appointments through a guided, multi-turn conversation.
+- Confirm and store booking details reliably.
+- Receive email confirmations after successful bookings.
+- Allow administrators to view and manage bookings through an admin dashboard.
+
+The focus of the project is on **robust system design, conversational state handling, and reliable end-to-end functionality**.
+
+---
+
+## Key Features
+
+### Document-Based Question Answering (RAG)
+
+- Supports uploading one or more PDF documents.
+- Documents are processed into embeddings and stored in a vector index.
+- User queries are answered strictly using retrieved document context.
+- Handles missing or invalid documents gracefully.
 
 ---
 
 ### Conversational Booking Assistant
 
-- Chat-based interface with short-term conversational memory (last 20–25 messages).
-- Automatically detects:
-  - General queries → routed to the RAG pipeline
-  - Booking intent → routed to the booking flow
-- Booking is handled through a stateful, multi-turn conversation.
+- Chat-based interface with short-term memory (last 20–25 messages).
+- Automatically routes:
+  - General queries → RAG pipeline
+  - Booking intent → booking workflow
+- Ensures smooth, stateful multi-turn interactions.
 
 ---
 
-### Booking Flow (Slot Filling)
+### Appointment Booking Flow
 
 The assistant collects the following details step by step:
 
@@ -52,126 +51,107 @@ The assistant collects the following details step by step:
 2. Email address  
 3. Phone number  
 4. Doctor or specialty  
-5. Preferred appointment date  
-6. Preferred appointment time  
+5. Appointment date  
+6. Appointment time  
 
 Key characteristics:
-- Questions are asked only once.
-- User inputs are validated before being accepted.
-- The booking proceeds only after explicit user confirmation.
+- Each question is asked only once.
+- Inputs are validated before acceptance.
+- Booking proceeds only after explicit user confirmation.
 
 ---
 
-### Confirmation & Persistence
+### Confirmation, Storage, and Email
 
-- Once all booking details are collected, the assistant:
-  - Summarizes the booking details.
-  - Asks the user to explicitly confirm or cancel.
 - On confirmation:
-  - The booking is saved in a SQLite database.
-  - A unique booking ID is generated and returned to the user.
+  - Booking details are stored in a SQLite database.
+  - A unique booking ID is generated.
+- A confirmation email is sent to the user containing appointment details.
+- If email delivery fails, the booking is still saved and the user is informed.
 
-Note: SQLite database reset on restart is acceptable as per assignment instructions.
-
----
-
-### Email Notification
-
-- A confirmation email is sent to the user after successful booking.
-- The email includes:
-  - Booking ID
-  - Doctor or specialty
-  - Appointment date and time
-- Email failures are handled gracefully:
-  - The booking is still saved.
-  - The user is informed clearly that email delivery failed.
-
-Email is implemented using SMTP with Gmail App Passwords and Streamlit secrets.
+Email delivery is implemented using SMTP with Gmail App Passwords and Streamlit secrets.
 
 ---
 
-### Admin Dashboard (Mandatory)
+### Admin Dashboard
 
 - Accessible via a sidebar mode selector.
-- Displays all stored bookings from the database.
-- Supports searching bookings by name or email.
-- Demonstrates backend persistence and admin-level visibility.
+- Displays all stored bookings.
+- Supports searching by name or email.
+- Provides basic administrative visibility into bookings.
 
 ---
 
-## 3. Architecture Overview
+## Architecture Overview
 
-- Frontend & Backend: Streamlit  
-- RAG Pipeline: PDF ingestion, chunking, embeddings, vector similarity search  
-- Booking System: Intent detection, slot filling, validation, confirmation  
-- Database: SQLite  
-- Notifications: SMTP-based email service  
-
----
-
-## 4. Project Structure
-
-project_root/  
-├── app/  
-│   ├── main.py              # Streamlit entry point  
-│   ├── chat_logic.py        # Intent detection & chat memory  
-│   ├── booking_flow.py      # Slot filling, validation, confirmation  
-│   ├── rag_pipeline.py      # PDF ingestion & retrieval  
-│   ├── tools.py             # Database and email utilities  
-│   ├── admin_dashboard.py   # Admin dashboard UI  
-│   └── config.py  
-│  
-├── db/  
-│   ├── database.py          # SQLite connection  
-│   └── models.py            # Database schema  
-│  
-├── .streamlit/  
-│   └── secrets.toml         # Secrets (not committed)  
-│  
-├── requirements.txt  
-└── README.md  
+- **Frontend & Backend:** Streamlit  
+- **RAG Pipeline:** PDF ingestion, chunking, embeddings, vector similarity search  
+- **LLM:** Groq (via OpenAI-compatible REST API)  
+- **Vector Store:** FAISS (session-scoped, disk-backed)  
+- **Database:** SQLite  
+- **Email Service:** SMTP  
 
 ---
 
-## 5. Running the Project Locally
+## Project Structure
+
+```
+project_root/
+├── app/
+│   ├── main.py              # Streamlit entry point
+│   ├── chat_logic.py        # Intent detection & chat memory
+│   ├── booking_flow.py      # Slot filling, validation, confirmation
+│   ├── rag_pipeline.py      # RAG logic
+│   ├── tools.py             # Database and email utilities
+│   ├── admin_dashboard.py   # Admin UI
+│   └── utils/
+│       └── faiss_store.py   # Session-scoped FAISS persistence
+│
+├── db/
+│   ├── database.py          # SQLite connection
+│   └── models.py            # Database schema
+│
+├── .streamlit/
+│   └── secrets.toml         # Secrets (not committed)
+│
+├── requirements.txt
+└── README.md
+```
+
+---
+
+## Running Locally
 
 ### Prerequisites
-
-- Python 3.9 or higher
+- Python 3.9+
 - Git
 - Streamlit
 
 ### Steps
-
-1. Install dependencies  
-   pip install -r requirements.txt
-
-2. Run the application  
-   streamlit run app/main.py
+```bash
+pip install -r requirements.txt
+streamlit run app/main.py
+```
 
 ---
 
-## 6. Deployment
+## Deployment
 
-The application is deployed using **Streamlit Cloud**.
-
-- Source code is hosted on a public GitHub repository.
-- Secrets (SMTP credentials) are configured using Streamlit Cloud settings.
-- The deployed application is accessible through a public URL.
+- Deployed using **Streamlit Cloud**.
+- Secrets are managed via Streamlit Cloud settings.
+- Publicly accessible through the live demo link above.
 
 ---
 
-## 7. Error Handling & Validation
+## Error Handling & Validation
 
 The system validates and handles:
-
-- Invalid email formats
-- Invalid phone numbers
-- Invalid date formats (YYYY-MM-DD)
+- Invalid email and phone formats
+- Incorrect date/time inputs
 - Missing or invalid PDF uploads
-- Database insertion or connection errors
+- Database errors
 - Email delivery failures
 
-All errors are communicated using **clear, user-friendly messages**, as required.
+All errors are communicated using clear, user-friendly messages.
 
 ---
