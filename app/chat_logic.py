@@ -15,7 +15,7 @@ def add_message(role: str, content: str):
         {"role": role, "content": content}
     )
 
-    # Keep only last MAX_HISTORY messages
+    # Keep only last MAX_HISTORY (25) messages
     if len(st.session_state.messages) > MAX_HISTORY:
         st.session_state.messages = st.session_state.messages[-MAX_HISTORY:]
 

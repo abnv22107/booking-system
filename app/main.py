@@ -2,10 +2,6 @@ import sys
 from pathlib import Path
 import uuid
 from utils.faiss_store import delete_faiss_index
-
-# -------------------------------------------------
-# Fix Python path so db/ and app/ imports work
-# -------------------------------------------------
 ROOT_DIR = Path(__file__).resolve().parent.parent
 sys.path.append(str(ROOT_DIR))
 
@@ -23,15 +19,13 @@ from rag_pipeline import ingest_pdfs, rag_query
 from admin_dashboard import render_admin_dashboard
 from db.models import create_tables
 
-# -------------------------------------------------
-# Streamlit Page Config
-# -------------------------------------------------
+# Setting up basic streamlit page 
 st.set_page_config(
     page_title="AI Doctor Booking Assistant",
     page_icon="🩺",
     layout="wide"
 )
-# ---------------- Session ID ----------------
+# Getting the session ID 
 if "session_id" not in st.session_state:
     st.session_state.session_id = str(uuid.uuid4())
 
@@ -39,9 +33,8 @@ if "session_id" not in st.session_state:
 # Initialize DB tables
 create_tables()
 
-# -------------------------------------------------
 # App Title & Mode Selection
-# -------------------------------------------------
+
 st.title("AI Doctor Booking Assistant")
 
 mode = st.sidebar.selectbox(
@@ -49,18 +42,16 @@ mode = st.sidebar.selectbox(
     ["User", "Admin"]
 )
 
-# =================================================
-# ================ ADMIN MODE =====================
-# =================================================
+# ADMIN MODE 
+
 if mode == "Admin":
     render_admin_dashboard()
-    st.stop()   #STOP execution here
+    st.stop()   
 
-# =================================================
-# ================ USER MODE ======================
-# =================================================
+# USER MODE
 
-# ---------------- PDF Upload (RAG) ----------------
+
+# PDF upload 
 st.subheader("Upload Documents for Q&A")
 
 uploaded_pdfs = st.file_uploader(
@@ -78,10 +69,10 @@ if uploaded_pdfs:
         else:
             st.error("Could not extract text from the uploaded PDFs.")
 
-# ---------------- Chat State ----------------
+
 initialize_chat_state()
 
-# Clear chat button
+# Clear chat button logic
 if st.button("Clear Chat"):
     delete_faiss_index(st.session_state.session_id)
 
@@ -89,12 +80,12 @@ if st.button("Clear Chat"):
     st.rerun()
 
 
-# Display previous messages
+# For displaying previous messages
 for msg in get_chat_history():
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
 
-# ---------------- Chat Input ----------------
+# Chat Input
 user_input = st.chat_input("Ask a question or book an appointment…")
 
 
@@ -104,7 +95,7 @@ if user_input:
     with st.chat_message("user"):
         st.markdown(user_input)
 
-    # ---------------- ROUTING LOGIC ----------------
+    # ROUTING LOGIC
     if (
         "booking_state" in st.session_state
         and st.session_state.booking_state.get("active")
