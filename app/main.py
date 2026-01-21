@@ -1,5 +1,7 @@
 import sys
 from pathlib import Path
+import uuid
+from utils.faiss_store import delete_faiss_index
 
 # -------------------------------------------------
 # Fix Python path so db/ and app/ imports work
@@ -29,6 +31,10 @@ st.set_page_config(
     page_icon="🩺",
     layout="wide"
 )
+# ---------------- Session ID ----------------
+if "session_id" not in st.session_state:
+    st.session_state.session_id = str(uuid.uuid4())
+
 
 # Initialize DB tables
 create_tables()
@@ -36,7 +42,7 @@ create_tables()
 # -------------------------------------------------
 # App Title & Mode Selection
 # -------------------------------------------------
-st.title("🩺 AI Doctor Booking Assistant")
+st.title("AI Doctor Booking Assistant")
 
 mode = st.sidebar.selectbox(
     "Select Mode",
@@ -48,14 +54,14 @@ mode = st.sidebar.selectbox(
 # =================================================
 if mode == "Admin":
     render_admin_dashboard()
-    st.stop()   # ⛔ STOP execution here
+    st.stop()   #STOP execution here
 
 # =================================================
 # ================ USER MODE ======================
 # =================================================
 
 # ---------------- PDF Upload (RAG) ----------------
-st.subheader("📄 Upload Documents for Q&A")
+st.subheader("Upload Documents for Q&A")
 
 uploaded_pdfs = st.file_uploader(
     "Upload one or more PDF files",
@@ -76,11 +82,12 @@ if uploaded_pdfs:
 initialize_chat_state()
 
 # Clear chat button
-if st.button("🧹 Clear Chat"):
-    st.session_state.messages = []
-    if "booking_state" in st.session_state:
-        del st.session_state.booking_state
+if st.button("Clear Chat"):
+    delete_faiss_index(st.session_state.session_id)
+
+    st.session_state.clear()
     st.rerun()
+
 
 # Display previous messages
 for msg in get_chat_history():
