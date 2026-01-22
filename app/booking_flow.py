@@ -86,19 +86,18 @@ def update_booking_state(user_message: str):
 
     value = user_message.strip()
 
-    # ---------- VALIDATIONS ----------
     if field == "email" and not is_valid_email(value):
-        return "❌ Please enter a valid email address."
+        return "Please enter a valid email address."
 
     if field == "phone" and not is_valid_phone(value):
-        return "❌ Please enter a valid phone number (digits only)."
+        return "Please enter a valid phone number (digits only)."
 
     if field == "date" and not is_valid_date(value):
-        return "❌ Please enter date in YYYY-MM-DD format."
+        return "Please enter date in YYYY-MM-DD format."
 
     if field == "time":
         if not is_valid_time(value):
-            return "❌ Please enter a valid time (e.g., 10:30 AM)."
+            return "Please enter a valid time (e.g., 10:30 AM)."
 
         date = state.get("date")
         specialty = state.get("doctor_or_specialty")
@@ -113,13 +112,13 @@ def update_booking_state(user_message: str):
             suggestion_text = ""
             if state["suggested_slots"]:
                 suggestion_text = (
-                    "\n\n🕒 **Available nearby slots:** "
+                    "\n\n**Available nearby slots:** "
                     + ", ".join(state["suggested_slots"])
                 )
 
             return (
-                "⚠️ The selected time slot is already booked for this specialty.\n\n"
-                "Would you like to continue anyway?\n"
+                "The selected time slot is already booked for this specialty.\n\n"
+                "Would you like to continue anyway?\n\n"
                 "Reply **Yes** to continue or **No** to choose another time."
                 + suggestion_text
             )
@@ -133,14 +132,14 @@ def update_booking_state(user_message: str):
 def summarize_booking():
     b = st.session_state.booking_state
     return (
-        "📝 **Please confirm your appointment details:**\n\n"
-        f"- **Name:** {b['name']}\n"
-        f"- **Email:** {b['email']}\n"
-        f"- **Phone:** {b['phone']}\n"
-        f"- **Doctor/Specialty:** {b['doctor_or_specialty']}\n"
-        f"- **Date:** {b['date']}\n"
-        f"- **Time:** {b['time']}\n\n"
-        "✅ Please reply with **Yes** to confirm or **No** to cancel."
+        "**Please confirm your appointment details:**\n\n"
+        f"**Name:** {b['name']}\n\n"
+        f"**Email:** {b['email']}\n\n"
+        f"**Phone:** {b['phone']}\n\n"
+        f"**Doctor/Specialty:** {b['doctor_or_specialty']}\n\n"
+        f"**Date:** {b['date']}\n\n"
+        f"**Time:** {b['time']}\n\n"
+        "Please reply with **Yes** to confirm or **No** to cancel."
     )
 
 
@@ -198,20 +197,20 @@ def handle_booking_intent(user_message: str) -> str:
 
                 if email_sent:
                     return (
-                        "✅ Your appointment is confirmed!\n\n"
-                        f"📌 **Booking ID:** {booking_id}\n\n"
-                        "📧 A confirmation email has been sent."
+                        "**Your appointment is confirmed!**\n\n"
+                        f"**Booking ID:** {booking_id}\n\n"
+                        "A confirmation email has been sent to your email address."
                     )
                 else:
                     return (
-                        "✅ Your appointment is confirmed!\n\n"
-                        f"📌 **Booking ID:** {booking_id}\n\n"
-                        "⚠️ Email could not be sent, but your booking was saved."
+                        "**Your appointment is confirmed!**\n\n"
+                        f"**Booking ID:** {booking_id}\n\n"
+                        "Email could not be sent, but your booking was saved successfully."
                     )
 
             elif user_message.lower() in ["no", "n", "cancel"]:
                 del st.session_state.booking_state
-                return "❌ Booking cancelled. Let me know if you'd like to start again."
+                return "Booking cancelled. Let me know if you'd like to start again."
 
             else:
                 return summarize_booking()

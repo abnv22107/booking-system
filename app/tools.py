@@ -120,9 +120,10 @@ def send_confirmation_email(to_email: str, subject: str, body: str) -> bool:
         smtp_port = st.secrets["SMTP_PORT"]
         smtp_email = st.secrets["SMTP_EMAIL"]
         smtp_password = st.secrets["SMTP_PASSWORD"]
+        email_name = st.secrets.get("EMAIL_NAME", "")
 
         msg = EmailMessage()
-        msg["From"] = smtp_email
+        msg["From"] = f"{email_name} <{smtp_email}>" if email_name else smtp_email
         msg["To"] = to_email
         msg["Subject"] = subject
         msg.set_content(body)
